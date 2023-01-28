@@ -1,0 +1,5 @@
+NOTES for Ch 1 manuscript prep/analysis:
+
+D04W, 2018 canopy CID files: We had two sets named "QURU_CANxx_..." and none labeled "ACRU...". It appears that all leaves from this subplot were sampled with the CID at the end of the subplot data collection period, all in a row, and I made the assumption that QURU was accurate for the first set (01, 02, 03 etc all taken in a row) and not the second set. (i.e. the second set was made by accidentally forgetting to change the species name to ACRU from QURU.) I decided to rename the second set with "ACRU".
+
+Check for differences in reflectance across these groups, though, and just know that this assumption may have been wrong. In any case, I think the two sets were distinct (like 01 through 09 belonging to each group was clear), just not whether the species designation for each was accurate.

@@ -1,0 +1,18 @@
+"D01E_quru_can04_07222018" first 3 logs mistaken, take 4-8 LINES 106:108
+"D01E_quru_can05_07222018" take last 5 (6-10) LINES 114:118
+"D01W_pogr_can01_07232018" take last 5 (6-10) LINES 189:193
+"D01W_pogr_can02_07232018" take last 5 (11-15) LINES 199:208
+"D02E_pogr_can06_07192018" omit 1st log LINE 374
+"D02E_pogr_can09_07192018" take last 5 (11-15) LINES 390:399
+"D02E_quru_can12_07192018" take last 5 (11-15) LINES 470:479
+"D02W_acru_can11_07182018" take last 5 (16-20) LINES 540:554
+"D02W_pogr_can10_07182018" take last 5 (6-10) LINES 625:629
+"D02W_quru_can07_07172018" omit 6th log LINE 695
+"D03E_pogr_can08_07202018" take last 5 (6-10) LINES 816:820
+"D03E_pogr_can09_07202018" take last 5 (6-10) LINES 826:830
+"D03E_quru_can07_07202018" take last 5 (6-10) LINES 866:870
+"D03W_pogr_can01_07222018" take last 5 (6-10) LINES 931:935
+"D04W_pogr_can07_07202018" take last 5 (6-10) LINES 1236:1240
+"D04W_quru_can02_07202018" take last 5 (6-10) LINES 1261:1265
+"D04W_quru_can04_07202018" keep first 5, get rid of 6-7 LINES 1281:1282
+"D04W_quru_can05_07202018" take last 5 (6-10) LINES 1283:1287

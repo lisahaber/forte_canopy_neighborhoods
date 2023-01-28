@@ -1,0 +1,222 @@
+---
+title: "Canopy Tree Neighborhoods Study"
+author: "Lisa Haber"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Overview: This is a running output file for dissertation chapter 1 analyses and figures.
+
+#### Background and Objectives for Chapter 1: Ecophysiological stability across a gradient of disturbance severity
+	
+## 1.1 Introduction
+Forest production resilience to disturbance depends in part on the capacity of surviving trees to efficiently acquire and use resources such as light, nitrogen (N), and water for which senescing neighbors no longer compete (Nave et al., 2011). As disturbances become more frequent and spatially extensive across the temperate biome of North America (Cohen et al., 2016), understanding the impacts of spatially heterogeneous tree mortality on forest C cycling is timely. Variation in the distribution and timing of tree senescence constrains access to liberated resources, and can be an important environmental driver to capture in modeling forest production response (Dietze & Matthes, 2014). Additionally, differences in the leaf functional traits, including ecophysiological plasticity and leaf biochemistry, of dominant plant functional types (PFTs) within the forest matrix may influence growth of surviving trees following disturbance (Bernhardt-Römermann et al., 2011). 
+
+The unique neighborhoods occupied by trees, which differ in both biological (e.g. PFT and/or functional trait diversity) and structural (e.g. size of neighbors, stem density) characteristics, may impact trees’ functional response to disturbance with implications for production resilience (Grossiord, 2019; Uriarte et al., 2004). Here, the term “neighborhood” refers to individual trees’ zones of ecological influence (Addicott et al., 1987), where we hypothesize that dynamic leaf functional and biochemical response – and concomitant stability of C uptake – may be linked to resource redistribution resulting from disturbance.  More biodiverse and more structurally complex neighborhoods can more efficiently use available resources such as light and N than simpler, less diverse ones. As a result, we expect variability in neighborhood biological and structural characteristics to influence stability of C cycling (Cardinale et al., 2012; Paquette & Messier, 2011).  Inter- (Haddad et al., 2008) and intra-specific (Ali et al., 2017) plant functional trait diversity has been correlated with ecosystem functional stability following disturbance. Moreover, leaf functional trait assemblages within and across PFTs are sensitive to disturbance, making some leaf functional traits both a driver of and response variable to environmental change (Garnier et al., 2016). 
+
+ In this study, I will use repeated canopy leaf ecophysiological and morphological sampling of trees, each within a unique neighborhood and exposed to one of four disturbance severities, to probe whether, and when, dynamic leaf physiology is supported following experimental disturbance by a combination of trait plasticity and neighborhood-scale structure. At the Forest Resilience Threshold Experiment (FoRTE) site in northern Michigan, I will focus on three widespread canopy dominant tree species representing two PFTs: bigtooth aspen (Populus grandidentata), an early successional temperate broadleaf species, as well as red maple (Acer rubrum) and Northern red oak (Quercus rubra), two mid- to late-successional species. Following induced disturbance – in the form of stem girdling – across a severity gradient from 0 – 85 % leaf area loss, I will examine intra- and interspecific distributions of leaf functional traits with demonstrated sensitivity to disturbance (Kumordzi et al., 2019; Schafer et al., 2014) in order to characterize disturbance-precipitated physiological response across the canopy stratum. Prior work at our experimental site has indicated that moderate-severity disturbance does not precipitate extensive N leaching. In the FASET disturbance manipulation, which involved stem girdling of all early successional aspen and birch trees across 33 hectares, uptake of available N by later successional species including maples and oaks led to N enrichment of canopy leaves (Nave et al., 2011), providing a potential mechanism linking disturbance to leaf functional traits to ecosystem production. I will use a finely detailed stem map data set to delineate tree neighborhoods for each sampled stem, in order to characterize local environmental heterogeneity that may contribute to canopy leaf function and ecosystem production response. 
+
+## 1.2 Objectives & Hypotheses:
+
+### **O1.1:** 
+Characterize differences in the crown-level means of key biochemical (inferred from leaf reflectance as the normalized difference vegetation index), physiological (light-saturated photosynthetic rate, stomatal conductance), and morphological (leaf mass per area) variables for trees subjected to differing levels of neighborhood disturbance severity.
+
+### **H1.1:** 
+In surviving tree crowns, increased leaf N content (Nave et al., 2011) will lead to enhanced normalized difference vegetation index (NDVI), leaf-level photosynthetic rate (Asat), stomatal conductance (gs), and leaf mass per area (LMA) across the first three growing seasons following stem girdling. The magnitude of this enhancement will be greatest at the highest degrees of disturbance (85 % canopy LAI loss), where neighboring tree senescence will produce a larger pool from which surviving trees may extract resources.
+	
+### **O1.2:**
+Compare intra- and interspecific leaf functional plasticity for crowns of three different species included in the study: red maple (Acer rubrum), bigtooth aspen (Populus grandidentata), and Northern red oak (Quercus rubra).
+
+### **H1.2:** 
+Later successional species (A. rubrum and Q. rubra) subjected to identical disturbance severities as the aging early successional aspen will experience greater leaf N increase and enhanced physiological response (Asat), as these species are physiologically poised to become canopy dominants against the broader regional backdrop of declining early successional species (Wolter & White, 2002). Although all crowns were sampled at similar pre-disturbance within-canopy light conditions, crowns of smaller trees will physiologically outperform those of larger conspecific trees following well-established age- and size-related trends for temperate forest trees (Meinzer et al., 2011).
+
+### Methods, O2.1 & O2.2.
+
+multi-factor ANOVAs (similar to those run for Ch.2 analyses) testing differences in reNDVI, LMA, gs, Asat across disturbance severities, years, species
+
+
+```{r, echo = FALSE}
+## Bring in the data and load the packages
+
+# packages
+library(tidyverse)
+library(lubridate)
+
+# data for part 1: leaf samples for physiology, morphology, reflectance 2018-2021
+# morphology
+morph <- read.csv("C:/github/forte_canopy_neighborhoods/data/cleaned_data_for_analyses/lma_canopy_all_years.csv") %>%
+  as_tibble()
+
+# photosynthesis
+d2018 <- read.csv("C:/github/forte_canopy_neighborhoods/data/cleaned_data_for_analyses/LICOR_canopy_leaf_phys_2018.csv") %>%
+  as_tibble()
+d2019 <- read.csv("C:/github/forte_canopy_neighborhoods/data/cleaned_data_for_analyses/LICOR_canopy_leaf_phys_2019.csv") %>%
+  as_tibble() 
+d2020 <- read.csv("C:/github/forte_canopy_neighborhoods/data/cleaned_data_for_analyses/LICOR_canopy_leaf_phys_2020.csv") %>%
+  as_tibble()
+d2021 <- read.csv("C:/github/forte_canopy_neighborhoods/data/cleaned_data_for_analyses/LICOR_canopy_leaf_phys_2021.csv") %>%
+  as_tibble()
+
+## get rid of negative Asat values, then create crown-level means for individual trees (with 5 observations times 3 per crown)
+# note that in 2018, 2019, 2020 I may have had more than 3 leaves per crown because I initially collected 5 samples per crown in D2 and D4.
+# solution is to only take the first three samples from each crown in each year.
+Asat2018 <- d2018 %>%
+  filter(Photo >= 0) %>%
+  group_by(final_ID, Sample) %>%
+  mutate(MeanPhoto = mean(Photo),
+         MeanCond = mean(Cond))  %>%
+  filter(girdled == "N")
+
+Asat2019 <- d2019 %>% 
+  filter(Photo >= 0,
+          Timestamp > '2019-07-10') %>% ## Recall that 2019 had TWO sets of measurements, one early season and one late season. ONLY USING late season. i.e. after "2019-07-10"
+  group_by(Filename) %>%
+  mutate(MeanPhoto = mean(Photo),
+         MeanCond = mean(Cond))  %>%
+  filter(girdled == "N")
+
+Asat2020 <- d2020 %>%
+  filter(Photo >= 0) %>%
+  group_by(final_ID, Sample) %>%
+  mutate(MeanPhoto = mean(Photo),
+         MeanCond = mean(Cond))  %>%
+  filter(girdled == "N")
+
+Asat2021 <- d2021 %>%
+  filter(Photo >= 0) %>%
+  group_by(final_ID, Sample) %>%
+  mutate(MeanPhoto = mean(Photo),
+         MeanCond = mean(Cond))  %>%
+  filter(girdled == "N")
+
+## bring in the FoRTE subplots treatment assignments
+library(readr)
+urlfile="https://raw.githubusercontent.com/lisahaber/fortedata/master/inst/extdata/fd_subplots.csv" #github link for raw fortedata file with treatment and severity assignments
+treatments <- read_csv(url(urlfile))
+require(tidyverse)
+
+treatments <- treatments %>%
+  mutate(Zero = "0")
+
+treatments <- treatments %>% 
+  unite(Subplot, c("replicate", "Zero", "plot", "subplot"), sep="")
+
+## merge all years' data
+alldata <- rbind(Asat2018, Asat2019, Asat2020, Asat2021)
+
+## now join to treatments data
+treatments1 <- treatments %>%
+  dplyr::select(Subplot, disturbance_severity, treatment)
+
+df <- left_join(alldata, treatments1, by = "Subplot")
+
+mean_crown_phys <- df %>%
+  dplyr::select(Photo, Cond, Filename, Species, Subplot, final_ID, Sample, Year, disturbance_severity, treatment) %>%
+  group_by(Year, final_ID) %>%
+  summarize(crown_mean_Asat = mean(meanPhoto),
+            crown_mean_Cond = mean(meanCond))
+
+subplot_mean_phys <- left_join(subplot_mean_phys, treatments1, by = "Subplot")
+
+# add replicate to the dataset
+subplot_mean_phys$Replicate <-
+  ifelse(grepl("A...", subplot_mean_phys$Subplot),
+         "A",
+         ifelse(grepl("B...", subplot_mean_phys$Subplot),
+                "B",
+                ifelse(grepl("C...", subplot_mean_phys$Subplot),
+                       "C",
+                       ifelse(grepl("D...", subplot_mean_phys$Subplot),
+                              "D", "Other"
+                       ))))
+
+
+## making boxplots
+## make severity a factor!!!!
+subplot_mean_phys$disturbance_severity <- as.factor(subplot_mean_phys$disturbance_severity)
+
+bp1 <- subplot_mean_phys %>%
+  ggplot(aes(x = disturbance_severity, y = Subplot_mean_Asat, group_by(disturbance_severity), fill = disturbance_severity)) + 
+  theme_classic(base_size = 20) + 
+  geom_boxplot(show.legend = FALSE) +
+
+  labs(y=expression(atop("Light-Saturated Photosynthetic",
+                         "Rate (\u00b5mol CO\u2082/m\u00b2/sec\u00b9)")),
+       x=expression(paste(" ",Severity," (% ",Gross," ",Defoliation,")"))) +
+  # xlab("Severity (% Gross Defoliation)") +
+  # ylab("Subcanopy CWM leaf photosynthetic\nrate ( mu*molCO[2] m^-2 sec^-1)") +
+  scale_fill_manual(values = c("#000000", "#009E73", "#0072B2", "#D55E00")) +
+  facet_grid(~Year)
+
+bp1 #subplot mean Asat, all years
+
+# unit <- expression(paste(mu*molCO[2], m^-2, sec^-1))
+
+# str1 <- c("Subcanopy CWM Photosynthetic")
+# str2 <- c("Rate", " ","(\u00b5mol", " ", "CO\u2082", " ",  "m\u207b\u00b2", " ",  "sec\u00b9)")
+# 
+
+bp2 <- subplot_mean_phys %>%
+  ggplot(aes(x = disturbance_severity, y = Subplot_mean_Cond, group_by(disturbance_severity), fill = disturbance_severity)) + 
+  theme_classic(base_size = 20) + 
+  geom_boxplot(show.legend = FALSE) +
+  # xlab("Severity (% Gross Defoliation)") +
+  # ylab('Subcanopy CWM leaf stomatal conductance (mol' ~CO[2]~ m^-2~s^-1*')') +
+  
+  labs(y=expression(atop("Stomatal Conductance",
+                         "(mol CO\u2082/m\u00b2/sec\u00b9)")),
+       x=expression(paste(" ",Severity," (% ",Gross," ",Defoliation,")"))) +
+  scale_fill_manual(values = c("#000000", "#009E73", "#0072B2", "#D55E00")) + 
+  facet_grid(~Year)
+
+bp2 #subplot mean Asat, all years
+
+## determining total phys sample numbers from each year, 2018-2021
+phys_counts <- df1 %>%
+  group_by(final_ID, Year) %>%
+  summarize(mean_asat_plnt = mean(Scaled_Asat))
+
+phys_counts_year <- phys_counts %>%
+  group_by(Year) %>%
+  summarize(n = n())
+
+```
+
+### *O1.3:* Determine whether and how tree neighborhoods’ structural and biological characteristics correlate with leaf ecophysiological plasticity in response to disturbance. 
+
+### *H1.3:* 
+Focal trees in neighborhoods at the higher end of the disturbance severity gradient (i.e. with fewer surviving neighbors) will exhibit greater increases in crown-level mean leaf physiological and reflectance variables from pre-disturbance to two years post-disturbance due to decreased competition for resources. However, the impact of reduced competition will be mediated both by structural (size class) and biological (species) diversity of neighborhoods. Size asymmetries between focal trees and their neighbors will be greatest at the highest disturbance severity (where nearly all survivors are small trees due to the “top-down” elimination of neighboring basal area), further enhancing focal trees’ access to liberated resources (DeMalach et al., 2016). In neighborhoods with greater species diversity, niche complementarity will also enhance focal trees’ ability to access resources relative to less diverse neighborhoods at the same disturbance severity and/or similarly diverse neighborhoods in the control plot (Fargione et al., 2007).
+
+### *Methods 1.3*
+
+## note that here, I need some additional data -- stem maps + biomass increment from dendrobands
+
+1.3.5 Statistical analysis
+I will use a series of spatially-explicit Bayesian hierarchical models to analyze the influence of neighborhood attributes (neighboring tree sizes, species identities, and spatial orientation) as well as time (i.e., year) on focal tree physiological and morphological variables of interest. The individual tree crown (i.e., the mean value for each crown from three sampled leaves within the crown) is the experimental unit considered in all models (and denoted in the model by subscript i). I am choosing to use a Bayesian modeling framework because it confers several advantages over frequentist spatial modeling approaches in this study. First, it will allow for flexibility in prior distribution assignments for modeled variables, reflecting the reality of (in some cases) non-normally distributed parameters (DBH and disturbance severity). Second, Bayesian hierarchical modeling frameworks are increasingly used in similar spatially explicit ecological analyses, and there is growing precedent in the literature for use of these techniques (Banner et al., 2020; Fortin & Dale, 2005; Hooten et al., 2015). Third, Bayesian hierarchical models allow for an explicit assessment of parameter uncertainty, which may prove useful both in this study and in decision making about future study designs within the ongoing FoRTE project.
+To address my interrelated and explicitly spatial questions, I will use the model outlined below (and described in detail following the series of component equations). Subscript notation is used throughout the model structure to index values for variables as follows: i  denotes the ith tree crown in the sampled population of 70 focal trees; j indexes the year of observation in the four-year timeframe from 2018-2021; k indicates the kth species in the set of three tree species included in this analysis (red maple, red oak, and bigtooth aspen); l, m, and n index the two-way interactions of disturbance by year, species by year, and disturbance by species, respectively (each of which is a parameter of explicit ecological interest in this study):
+
+
+y_i  ~ N(μ_i,τ)						(1.1)
+
+μ_i= α+ β_1 〖DBH〗_i+β_2 D_i+ β_3 H_i+u_(1〖jYear〗_iϵj )+u_(2〖kSp〗_iϵk )+ u_(〖3lD*Year〗_(i∈l) )+u_(〖4mSp*Year〗_(i∈m) )+u_(〖5nD*Sp〗_(i∈n) )+ ν_i+ ϵ_i										(1.2)
+
+α ~ Dflat(); τ ~ γ(0.01,0.01)				(1.3)
+
+			β_1  ~ N(0, τ_1 ); τ_(1 )=  1/(σ_1^2 )  ; σ_(1 )~ U(0, 100)				(1.4)
+
+β_2  ~ N(0, τ_2 ); τ_(2 )=  1/(σ_2^2 )  ; σ_(2 )~ U(0, 100)				(1.5)
+β_3  ~ N(0, τ_3 ); τ_(3 )=  1/(σ_3^2 )  ; σ_3~ U(0, 100)				(1.6)
+u_(1〖jYear〗_iϵj )  ~ N(0, τ_u1); τ_(u1 )=  1/(σ_u1^2 )  ; σ_(u1 )~ U(0, 100)		(1.7)
+v_i   ~ MVNORM(0,Γ)						(1.8)
+ρ(d_ij )=exp⁡[-(d_ij  φ)^κ]					(1.9)
+φ ~ U(0,100)						(1.10)
+κ=1							(1.11)
+
+Where yi is the crown-level outcome of interest (leaf Asat, gs, LMA, NDVI; 1.1); µi is the modeled mean (1.2); α is the intercept term with a flat prior (1.3); β_1,β_2,β_3 are regression coefficients for the continuous variables of interest (1.4 – 1.6); DBHi is the tree’s diameter at breast height; Di is the fraction of neighboring tree basal area that has been girdled (0 to 0.85); Hi is a basal area-weighted Shannon’s biodiversity index for the focal tree’s neighborhood;  u1-u5 are spatially-uncorrelated (i.e. exchangeable) random effects of the year of measurement (2018-2021), tree species (one of three focal tree species included in the study), and interactions between species, year, and disturbance severity (see 1.7; all exchangeable random effects have the same prior distributions and are not mathematically stated for brevity); and vi is a jointly specified spatially-correlated random effect term with multivariate normal distribution and precision matrix Γ (1.8). Including vi allows for incorporation of spatial-autocorrelation in the model and will allow for analysis of the influence of other variables in light of spatial autocorrelation. The jointly specified spatial random effect term incorporates a spatial dependence structure such that the closer in space two trees are (i.e. the smaller the distance between them, denoted by dij; 1.9), the more similar their expected values of yi will be. The correlation between trees declines with increasing distance, as described by the powered exponential decay function (1.9). Parameters phi (1.10) and kappa (1.11) are scalar parameters controlling the powered decay function. The Gaussian prior distributions specified for the coefficients (betas in the above model; 1.4, 1.5, and 1.6) are selected as uninformative. 
+	Specification of prior distributions for Bayesian data analysis is an area of active debate in ecology (Banner et al., 2020), with some ecological modelers preferring to specify uninformative priors even when prior knowledge is available. To assess the impact on posterior distributions of my modeled variables, I will complete a sensitivity analysis using different choices of prior distribution for my fixed effect terms (betas in the model above; 1.4, 1.5, 1.6). 
+
+
