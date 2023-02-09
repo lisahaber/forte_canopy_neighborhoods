@@ -155,22 +155,22 @@ nrow(licordata2018_means)#242 crown-level samples represented in the data set fr
 ### 2019:
 ## COMPLETED
 #######################################################
-# Direct Google Drive link to "FoRTE/data/subcanopy_leaf_physiology/2018"
-as_id("https://drive.google.com/drive/u/0/folders/1w2a00MNQwh9c3HO04PDYm3V5gblbBSYG") %>% 
-  drive_ls ->
-  gdfiles
+# # Direct Google Drive link to "FoRTE/data/subcanopy_leaf_physiology/2018"
+# as_id("https://drive.google.com/drive/u/0/folders/1w2a00MNQwh9c3HO04PDYm3V5gblbBSYG") %>% 
+#   drive_ls ->
+#   gdfiles
 
 # Create a new data directory for files, if necessary
 data_dir <- "data/LICOR_2019_RAW"
-if(!dir.exists(data_dir)) dir.create(data_dir)
+# if(!dir.exists(data_dir)) dir.create(data_dir)
 
-# Download data
+# # Download data
 # for(f in seq_len(nrow(gdfiles))) {
 #   cat(f, "/", nrow(gdfiles), " Downloading ", gdfiles$name[f], "...\n", sep = "")
 #   drive_download(gdfiles[f,], overwrite = TRUE, path = file.path(data_dir, gdfiles$name[f]))
 # }
 
-# Get a (fresh) list of the downloaded data we're working with
+## Get a (fresh) list of the downloaded data we're working with
 # Filenames we want end with four digits and no file extension
 files <- list.files(data_dir, pattern = "[0-9]{4}$", full.names = TRUE)
 HEADER_PATTERN <- "\"OPEN \\d\\.\\d\\.\\d"

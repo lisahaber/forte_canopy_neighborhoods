@@ -1,0 +1,1063 @@
+---
+title: "Canopy Tree Neighborhoods Study"
+author: "Lisa Haber"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Overview: This is a running output file for dissertation chapter 1 analyses and figures.
+
+#### Background and Objectives for Chapter 1: Ecophysiological stability across a gradient of disturbance severity
+	
+## 1.1 Introduction
+Forest production resilience to disturbance depends in part on the capacity of surviving trees to efficiently acquire and use resources such as light, nitrogen (N), and water for which senescing neighbors no longer compete (Nave et al., 2011). As disturbances become more frequent and spatially extensive across the temperate biome of North America (Cohen et al., 2016), understanding the impacts of spatially heterogeneous tree mortality on forest C cycling is timely. Variation in the distribution and timing of tree senescence constrains access to liberated resources, and can be an important environmental driver to capture in modeling forest production response (Dietze & Matthes, 2014). Additionally, differences in the leaf functional traits, including ecophysiological plasticity and leaf biochemistry, of dominant plant functional types (PFTs) within the forest matrix may influence growth of surviving trees following disturbance (Bernhardt-Römermann et al., 2011). 
+
+The unique neighborhoods occupied by trees, which differ in both biological (e.g. PFT and/or functional trait diversity) and structural (e.g. size of neighbors, stem density) characteristics, may impact trees’ functional response to disturbance with implications for production resilience (Grossiord, 2019; Uriarte et al., 2004). Here, the term “neighborhood” refers to individual trees’ zones of ecological influence (Addicott et al., 1987), where we hypothesize that dynamic leaf functional and biochemical response – and concomitant stability of C uptake – may be linked to resource redistribution resulting from disturbance.  More biodiverse and more structurally complex neighborhoods can more efficiently use available resources such as light and N than simpler, less diverse ones. As a result, we expect variability in neighborhood biological and structural characteristics to influence stability of C cycling (Cardinale et al., 2012; Paquette & Messier, 2011).  Inter- (Haddad et al., 2008) and intra-specific (Ali et al., 2017) plant functional trait diversity has been correlated with ecosystem functional stability following disturbance. Moreover, leaf functional trait assemblages within and across PFTs are sensitive to disturbance, making some leaf functional traits both a driver of and response variable to environmental change (Garnier et al., 2016). 
+
+ In this study, I will use repeated canopy leaf ecophysiological and morphological sampling of trees, each within a unique neighborhood and exposed to one of four disturbance severities, to probe whether, and when, dynamic leaf physiology is supported following experimental disturbance by a combination of trait plasticity and neighborhood-scale structure. At the Forest Resilience Threshold Experiment (FoRTE) site in northern Michigan, I will focus on three widespread canopy dominant tree species representing two PFTs: bigtooth aspen (Populus grandidentata), an early successional temperate broadleaf species, as well as red maple (Acer rubrum) and Northern red oak (Quercus rubra), two mid- to late-successional species. Following induced disturbance – in the form of stem girdling – across a severity gradient from 0 – 85 % leaf area loss, I will examine intra- and interspecific distributions of leaf functional traits with demonstrated sensitivity to disturbance (Kumordzi et al., 2019; Schafer et al., 2014) in order to characterize disturbance-precipitated physiological response across the canopy stratum. Prior work at our experimental site has indicated that moderate-severity disturbance does not precipitate extensive N leaching. In the FASET disturbance manipulation, which involved stem girdling of all early successional aspen and birch trees across 33 hectares, uptake of available N by later successional species including maples and oaks led to N enrichment of canopy leaves (Nave et al., 2011), providing a potential mechanism linking disturbance to leaf functional traits to ecosystem production. I will use a finely detailed stem map data set to delineate tree neighborhoods for each sampled stem, in order to characterize local environmental heterogeneity that may contribute to canopy leaf function and ecosystem production response. 
+
+## 1.2 Objectives & Hypotheses:
+
+### **O1.1:** 
+Characterize differences in the crown-level means of key biochemical (inferred from leaf reflectance as the normalized difference vegetation index), physiological (light-saturated photosynthetic rate, stomatal conductance), and morphological (leaf mass per area) variables for trees subjected to differing levels of neighborhood disturbance severity.
+
+### **H1.1:** 
+In surviving tree crowns, increased leaf N content (Nave et al., 2011) will lead to enhanced normalized difference vegetation index (NDVI), leaf-level photosynthetic rate (Asat), stomatal conductance (gs), and leaf mass per area (LMA) across the first three growing seasons following stem girdling. The magnitude of this enhancement will be greatest at the highest degrees of disturbance (85 % canopy LAI loss), where neighboring tree senescence will produce a larger pool from which surviving trees may extract resources.
+	
+### **O1.2:**
+Compare intra- and interspecific leaf functional plasticity for crowns of three different species included in the study: red maple (Acer rubrum), bigtooth aspen (Populus grandidentata), and Northern red oak (Quercus rubra).
+
+### **H1.2:** 
+Later successional species (A. rubrum and Q. rubra) subjected to identical disturbance severities as the aging early successional aspen will experience greater leaf N increase and enhanced physiological response (Asat), as these species are physiologically poised to become canopy dominants against the broader regional backdrop of declining early successional species (Wolter & White, 2002). Although all crowns were sampled at similar pre-disturbance within-canopy light conditions, crowns of smaller trees will physiologically outperform those of larger conspecific trees following well-established age- and size-related trends for temperate forest trees (Meinzer et al., 2011).
+
+### Methods, O2.1 & O2.2.
+
+multi-factor ANOVAs (similar to those run for Ch.2 analyses) testing differences in reNDVI, LMA, gs, Asat across disturbance severities, years, species
+
+
+```{r, echo = FALSE, message = FALSE, warning=FALSE}
+## Bring in the data and load the packages
+
+# packages
+library(tidyverse)
+library(lubridate)
+library(agricolae)
+library(lme4) # runs linear mixed effects models
+library(lmerTest) # this library will enable generation of p-values for effects, among other things
+library(ggeffects) # for LME model effects visualization
+library(sjPlot)
+library(MuMIn)
+library(emmeans) # computes least square means and regression slope comparisons/contrasts
+library(cAIC4) # runs stepwise AICc model selection for LMEs
+library(sf)
+library(data.table)
+library(sp)
+library(rgdal)
+library(rgeos)
+library(mapview)
+library(vegan)
+
+# data for part 1: leaf samples for physiology, morphology, reflectance 2018-2021
+# morphology
+morph <- read.csv("C:/github/forte_canopy_neighborhoods/data/cleaned_data_for_analyses/lma_canopy_all_years.csv") %>%
+  as_tibble()
+
+# photosynthesis
+d2018 <- read.csv("C:/github/forte_canopy_neighborhoods/data/cleaned_data_for_analyses/LICOR_canopy_leaf_phys_2018.csv") %>%
+  as_tibble()
+d2019 <- read.csv("C:/github/forte_canopy_neighborhoods/data/cleaned_data_for_analyses/LICOR_canopy_leaf_phys_2019.csv") %>%
+  as_tibble() 
+d2020 <- read.csv("C:/github/forte_canopy_neighborhoods/data/cleaned_data_for_analyses/LICOR_canopy_leaf_phys_2020.csv") %>%
+  as_tibble()
+d2021 <- read.csv("C:/github/forte_canopy_neighborhoods/data/cleaned_data_for_analyses/LICOR_canopy_leaf_phys_2021.csv") %>%
+  as_tibble()
+
+## get rid of negative Asat values, then create crown-level means for individual trees (with 5 observations times 3 per crown)
+Asat2018 <- d2018 %>%
+  filter(Photo >= 0) %>%
+  group_by(final_ID, Sample) %>%
+  mutate(MeanPhoto = mean(Photo),
+         MeanCond = mean(Cond))  %>%
+  filter(girdled == "N")
+
+Asat2019 <- d2019 %>% 
+  filter(Photo >= 0,
+          Timestamp > '2019-07-10') %>% ## Recall that 2019 had TWO sets of measurements, one early season and one late season. ONLY USING late season. i.e. after "2019-07-10"
+  group_by(Filename) %>%
+  mutate(MeanPhoto = mean(Photo),
+         MeanCond = mean(Cond))  %>%
+  filter(girdled == "N")
+
+Asat2020 <- d2020 %>%
+  filter(Photo >= 0) %>%
+  group_by(final_ID, Sample) %>%
+  mutate(MeanPhoto = mean(Photo),
+         MeanCond = mean(Cond))  %>%
+  filter(girdled == "N")
+
+Asat2021 <- d2021 %>%
+  filter(Photo >= 0) %>%
+  group_by(final_ID, Sample) %>%
+  mutate(MeanPhoto = mean(Photo),
+         MeanCond = mean(Cond))  %>%
+  filter(girdled == "N")
+
+## bring in the FoRTE subplots treatment assignments
+library(readr)
+urlfile="https://raw.githubusercontent.com/lisahaber/fortedata/master/inst/extdata/fd_subplots.csv" #github link for raw fortedata file with treatment and severity assignments
+treatments <- read_csv(url(urlfile))
+require(tidyverse)
+
+treatments <- treatments %>%
+  mutate(Zero = "0")
+
+treatments <- treatments %>% 
+  unite(Subplot, c("replicate", "Zero", "plot", "subplot"), sep="")
+
+## merge all years' data
+alldata <- rbind(Asat2018, Asat2019, Asat2020, Asat2021)
+
+## now join to treatments data
+treatments1 <- treatments %>%
+  dplyr::select(Subplot, disturbance_severity, treatment)
+
+df <- left_join(alldata, treatments1, by = "Subplot")
+
+# note that in 2018, 2019, 2020 I may have had more than 3 leaves per crown because I initially collected 5 samples per crown in D2 and D4.
+# solution is to only take the first three samples from each crown in each year.
+## subset measurements so that only three measurements per crown are used across all years (some years had more than three per crown for some subplots)
+## new data frame for subset data -- "df1"
+
+## should have 280 trees (crowns) for the entire sample after excluding 8 data points (2 girdled trees x 4 years)
+counts <- df %>% group_by(final_ID, Year) %>% dplyr::tally() # Yes, 280 total. SCORE!
+# tibble::view(counts)
+
+df1 <- df %>%
+  group_by(Year, final_ID) %>%
+  slice(1:15) ## take first 15 observations per crown per year
+  
+counts1 <- df1 %>% group_by(final_ID, Year) %>% dplyr::tally()
+
+mean_crown_phys <- df1 %>%
+  dplyr::select(Photo, Cond, Filename, Species, Subplot, final_ID, Sample, Year, disturbance_severity, treatment, MeanPhoto, MeanCond) %>%
+  group_by(Year, final_ID) %>%
+  mutate(crown_mean_Asat = mean(MeanPhoto),
+            crown_mean_Cond = mean(MeanCond)) %>%
+  filter(row_number() == 1) %>%
+  select( -MeanPhoto, -MeanCond, -Photo, -Cond)
+
+# tibble::view(mean_crown_phys)
+
+## making boxplots
+## make severity a factor!!!!
+mean_crown_phys$disturbance_severity <- as.factor(mean_crown_phys$disturbance_severity)
+
+bp1 <- mean_crown_phys %>%
+  ggplot(aes(x = disturbance_severity, y = crown_mean_Asat, group_by(disturbance_severity), fill = disturbance_severity)) + 
+  theme_classic(base_size = 20) + 
+  geom_boxplot(show.legend = FALSE) +
+  ggtitle("All Species") +
+  labs(y=expression(atop("Light-Saturated Photosynthetic",
+                         "Rate (\u00b5mol CO\u2082/m\u00b2/sec\u00b9)")),
+       x=expression(paste(" ",Severity," (% ",Gross," ",Defoliation,")"))) +
+  # xlab("Severity (% Gross Defoliation)") +
+  # ylab("Subcanopy CWM leaf photosynthetic\nrate ( mu*molCO[2] m^-2 sec^-1)") +
+  scale_fill_manual(values = c("#000000", "#009E73", "#0072B2", "#D55E00")) +
+  facet_grid(~Year)
+
+bp1 #crown mean Asat, all years
+
+bp2 <- mean_crown_phys %>%
+  ggplot(aes(x = disturbance_severity, y = crown_mean_Cond, group_by(disturbance_severity), fill = disturbance_severity)) + 
+  theme_classic(base_size = 20) + 
+  geom_boxplot(show.legend = FALSE) +
+  # xlab("Severity (% Gross Defoliation)") +
+  # ylab('Subcanopy CWM leaf stomatal conductance (mol' ~CO[2]~ m^-2~s^-1*')') +
+  ggtitle("All Species") + 
+  labs(y=expression(atop("Stomatal Conductance",
+                         "(mol CO\u2082/m\u00b2/sec\u00b9)")),
+       x=expression(paste(" ",Severity," (% ",Gross," ",Defoliation,")"))) +
+  scale_fill_manual(values = c("#000000", "#009E73", "#0072B2", "#D55E00")) + 
+  facet_grid(~Year)
+
+bp2 #crown mean Cond, all years
+
+### Subset by species
+
+## ACRU
+bp3 <- mean_crown_phys %>%
+  filter(Species == "acru") %>%
+  ggplot(aes(x = disturbance_severity, y = crown_mean_Asat, group_by(disturbance_severity), fill = disturbance_severity)) + 
+  theme_classic(base_size = 20) + 
+  geom_boxplot(show.legend = FALSE) +
+  ggtitle("ACRU") +
+  labs(y=expression(atop("Light-Saturated Photosynthetic",
+                         "Rate (\u00b5mol CO\u2082/m\u00b2/sec\u00b9)")),
+       x=expression(paste(" ",Severity," (% ",Gross," ",Defoliation,")"))) +
+  # xlab("Severity (% Gross Defoliation)") +
+  # ylab("Subcanopy CWM leaf photosynthetic\nrate ( mu*molCO[2] m^-2 sec^-1)") +
+  scale_fill_manual(values = c("#000000", "#009E73", "#0072B2", "#D55E00")) +
+  facet_grid(~Year)
+
+bp3 # ACRU crown mean Asat, all years
+
+## QURU
+bp4 <- mean_crown_phys %>%
+  filter(Species == "quru") %>%
+  ggplot(aes(x = disturbance_severity, y = crown_mean_Asat, group_by(disturbance_severity), fill = disturbance_severity)) + 
+  theme_classic(base_size = 20) + 
+  geom_boxplot(show.legend = FALSE) +
+  ggtitle("QURU") +
+  labs(y=expression(atop("Light-Saturated Photosynthetic",
+                         "Rate (\u00b5mol CO\u2082/m\u00b2/sec\u00b9)")),
+       x=expression(paste(" ",Severity," (% ",Gross," ",Defoliation,")"))) +
+  # xlab("Severity (% Gross Defoliation)") +
+  # ylab("Subcanopy CWM leaf photosynthetic\nrate ( mu*molCO[2] m^-2 sec^-1)") +
+  scale_fill_manual(values = c("#000000", "#009E73", "#0072B2", "#D55E00")) +
+  facet_grid(~Year)
+
+bp4 # QURU crown mean Asat, all years
+
+
+## POGR
+bp5 <- mean_crown_phys %>%
+  filter(Species == "pogr") %>%
+  ggplot(aes(x = disturbance_severity, y = crown_mean_Asat, group_by(disturbance_severity), fill = disturbance_severity)) + 
+  theme_classic(base_size = 20) + 
+  geom_boxplot(show.legend = FALSE) +
+  ggtitle("POGR") +
+  labs(y=expression(atop("Light-Saturated Photosynthetic",
+                         "Rate (\u00b5mol CO\u2082/m\u00b2/sec\u00b9)")),
+       x=expression(paste(" ",Severity," (% ",Gross," ",Defoliation,")"))) +
+  # xlab("Severity (% Gross Defoliation)") +
+  # ylab("Subcanopy CWM leaf photosynthetic\nrate ( mu*molCO[2] m^-2 sec^-1)") +
+  scale_fill_manual(values = c("#000000", "#009E73", "#0072B2", "#D55E00")) +
+  facet_grid(~Year)
+
+bp5 # POGR crown mean Asat, all years
+
+
+
+
+```
+
+
+```{r, echo=FALSE, message=FALSE}
+## Statistical models for Cond + Asat
+#### ANOVA runs for Asat, gs
+### Asat
+mean_crown_phys$disturbance_severity <- as.factor(mean_crown_phys$disturbance_severity)
+mean_crown_phys$treatment <- as.factor(mean_crown_phys$treatment)
+mean_crown_phys$Year <- as.factor(mean_crown_phys$Year)
+mean_crown_phys$Species <- as.factor(mean_crown_phys$Species)
+
+# recode 0 to 0.00 to help me when with the post-hoc output
+# subplot_mean_phys$disturbance_severity <- recode_factor(subplot_mean_phys$disturbance_severity, "0" = "0.00")
+
+## check model assumptions: normality, homogeneity of variances
+library(ggpubr)
+ggdensity(mean_crown_phys$crown_mean_Asat, 
+          main = "Density plot of crown mean Asat",
+          xlab = "Crown-level Asat")
+
+shapiro.test(mean_crown_phys$crown_mean_Asat) # p-value = 0.03 data are NOT normally distributed
+library(car)
+leveneTest(crown_mean_Asat ~ disturbance_severity, data=mean_crown_phys) # p-value = 0.08 data have homogeneity of variance
+
+## ANOVA is problematic because we have non-independent observations in some subplots for some years. We need to instead use a linear mixed effects model.
+
+lmeAsat <- lmer(crown_mean_Asat ~ disturbance_severity*Year + (1|Species) + (1|Subplot), data = mean_crown_phys)
+summary(lmeAsat) # This model includes interaction of disturbance severity and year, which we have repeatedly found in prior analyses of subcanopy physiology & respiration. This will treat both disturbance and year (as well as their interaction) as fixed effects, while species and subplot are random effects.
+AIC(lmeAsat)
+AICc(lmeAsat)
+require(lmerTest)
+e <- effects::allEffects(lmeAsat)
+plot(e)
+
+```
+
+```{r, echo=FALSE}
+## Add reflectance
+
+
+
+```
+
+### **O1.3:** Determine whether and how tree neighborhoods’ structural and biological characteristics correlate with leaf ecophysiological plasticity in response to disturbance. 
+
+### **H1.3:** 
+Focal trees in neighborhoods at the higher end of the disturbance severity gradient (i.e. with fewer surviving neighbors) will exhibit greater increases in crown-level mean leaf physiological and reflectance variables from pre-disturbance to two years post-disturbance due to decreased competition for resources. However, the impact of reduced competition will be mediated both by structural (size class) and biological (species) diversity of neighborhoods. Size asymmetries between focal trees and their neighbors will be greatest at the highest disturbance severity (where nearly all survivors are small trees due to the “top-down” elimination of neighboring basal area), further enhancing focal trees’ access to liberated resources (DeMalach et al., 2016). In neighborhoods with greater species diversity, niche complementarity will also enhance focal trees’ ability to access resources relative to less diverse neighborhoods at the same disturbance severity and/or similarly diverse neighborhoods in the control plot (Fargione et al., 2007).
+
+## Methods 1.3
+
+1.3.5 Statistical analysis
+I will use a series of spatially-explicit Bayesian hierarchical models to analyze the influence of neighborhood attributes (neighboring tree sizes, species identities, and spatial orientation) as well as time (i.e., year) on focal tree physiological and morphological variables of interest. The individual tree crown (i.e., the mean value for each crown from three sampled leaves within the crown) is the experimental unit considered in all models (and denoted in the model by subscript i). I am choosing to use a Bayesian modeling framework because it confers several advantages over frequentist spatial modeling approaches in this study. First, it will allow for flexibility in prior distribution assignments for modeled variables, reflecting the reality of (in some cases) non-normally distributed parameters (DBH and disturbance severity). Second, Bayesian hierarchical modeling frameworks are increasingly used in similar spatially explicit ecological analyses, and there is growing precedent in the literature for use of these techniques (Banner et al., 2020; Fortin & Dale, 2005; Hooten et al., 2015). Third, Bayesian hierarchical models allow for an explicit assessment of parameter uncertainty, which may prove useful both in this study and in decision making about future study designs within the ongoing FoRTE project.
+To address my interrelated and explicitly spatial questions, I will use the model outlined below (and described in detail following the series of component equations). Subscript notation is used throughout the model structure to index values for variables as follows: i  denotes the ith tree crown in the sampled population of 70 focal trees; j indexes the year of observation in the four-year timeframe from 2018-2021; k indicates the kth species in the set of three tree species included in this analysis (red maple, red oak, and bigtooth aspen); l, m, and n index the two-way interactions of disturbance by year, species by year, and disturbance by species, respectively (each of which is a parameter of explicit ecological interest in this study):
+
+
+          y_i  ~ N(μ_i,τ)						(1.1)
+
+      μ_i = α + β_1 〖DBH〗_i + β_2 D_i + β_3 H_i + u_(1〖jYear〗_iϵj ) + u_(2〖kSp〗_iϵk ) + u_(〖3lD * Year〗_(i∈l) ) + 
+      u_(〖4mSp * Year〗_(i∈m) ) + u_(〖5nD*Sp〗_(i∈n) ) + ν_i + ϵ_i										(1.2)
+
+      α ~ Dflat(); τ ~ γ(0.01,0.01)				(1.3)
+
+			β_1  ~ N(0, τ_1 ); τ_(1 )=  1/(σ_1^2 )  ; σ_(1 )~ U(0, 100)				(1.4)
+
+      β_2  ~ N(0, τ_2 ); τ_(2 )=  1/(σ_2^2 )  ; σ_(2 )~ U(0, 100)				(1.5)
+      
+      β_3  ~ N(0, τ_3 ); τ_(3 )=  1/(σ_3^2 )  ; σ_3~ U(0, 100)				(1.6)
+      
+      u_(1〖jYear〗_iϵj )  ~ N(0, τ_u1); τ_(u1 )=  1/(σ_u1^2 )  ; σ_(u1 )~ U(0, 100)		(1.7)
+      
+      v_i   ~ MVNORM(0,Γ)						(1.8)
+      
+      ρ(d_ij ) = exp⁡[-(d_ij  φ)^κ]					(1.9)
+        
+      φ ~ U(0,100)						(1.10)
+      
+      κ=1							(1.11)
+
+Where yi is the crown-level outcome of interest (leaf Asat, gs, LMA, NDVI; 1.1); µi is the modeled mean (1.2); α is the intercept term with a flat prior (1.3); β_1,β_2,β_3 are regression coefficients for the continuous variables of interest (1.4 – 1.6); DBHi is the tree’s diameter at breast height; Di is the fraction of neighboring tree basal area that has been girdled (0 to 0.85); Hi is a basal area-weighted Shannon’s biodiversity index for the focal tree’s neighborhood;  u1-u5 are spatially-uncorrelated (i.e. exchangeable) random effects of the year of measurement (2018-2021), tree species (one of three focal tree species included in the study), and interactions between species, year, and disturbance severity (see 1.7; all exchangeable random effects have the same prior distributions and are not mathematically stated for brevity); and vi is a jointly specified spatially-correlated random effect term with multivariate normal distribution and precision matrix Γ (1.8). Including vi allows for incorporation of spatial-autocorrelation in the model and will allow for analysis of the influence of other variables in light of spatial autocorrelation. The jointly specified spatial random effect term incorporates a spatial dependence structure such that the closer in space two trees are (i.e. the smaller the distance between them, denoted by dij; 1.9), the more similar their expected values of yi will be. The correlation between trees declines with increasing distance, as described by the powered exponential decay function (1.9). Parameters phi (1.10) and kappa (1.11) are scalar parameters controlling the powered decay function. The Gaussian prior distributions specified for the coefficients (betas in the above model; 1.4, 1.5, and 1.6) are selected as uninformative. 
+	Specification of prior distributions for Bayesian data analysis is an area of active debate in ecology (Banner et al., 2020), with some ecological modelers preferring to specify uninformative priors even when prior knowledge is available. To assess the impact on posterior distributions of my modeled variables, I will complete a sensitivity analysis using different choices of prior distribution for my fixed effect terms (betas in the model above; 1.4, 1.5, 1.6). 
+
+```{r, echo=FALSE, message=FALSE}
+# The palette with black:
+cbbPalette <-c("#1b9e77", "#d95f02", "#7570b3", "#e7298a", "#66a61e", "#e6aC02", "#a6761d", "#666666")
+
+# bring in tree species, girdling status, tag number, and Haglof plot ID for Haglof data set, convert to data frame
+inventory <- read.csv("C:/github/forte_canopy_neighborhoods/data/Inventory_CanopyTrees.csv")
+
+inventory <- as(inventory, "data.frame")
+inventory$Haglof_ID <- as.factor(inventory$Haglof_ID) 
+
+# now, bring in the spatial information from the Haglof files. Note that I manually merged all files prior to running analysis.
+haglof_spatial <- read.csv("C:/github/forte_canopy_neighborhoods/data/haglof_lookup.csv")
+haglof_spatial$Haglof_ID <- as.factor(haglof_spatial$Haglof_ID) 
+
+inventory_spatial <- left_join(haglof_spatial, inventory, by = "Haglof_ID") 
+inventory_spatial <- as(inventory_spatial, "data.frame")
+inventory_spatial <- inventory_spatial %>%
+  dplyr::rename(Haglof_Plot_ID = Haglof_Plot_ID.x)
+
+# add subplot column
+subplots <- read.csv("C:/github/forte_canopy_neighborhoods/data/subplots_table.csv")
+subplots$Haglof_Plot_ID <- as.factor(subplots$Haglof_Plot_ID)
+inventory_spatial <- merge(inventory_spatial, subplots, by="Haglof_Plot_ID")
+inventory_spatial <- inventory_spatial %>%
+  select(-Haglof_Plot_ID.y, -Notes)
+
+# cleaning up df
+# names(df)[names(df) == "DBH_cm"] <- "dbh"
+# df$dbh <- as.numeric(df$dbh)
+inventory_spatial$PlotID <- as.factor(inventory_spatial$PlotID)
+inventory_spatial$Species <- as.factor(inventory_spatial$Species)
+
+# make a data frame
+spatial.data <- as(inventory_spatial, "data.frame")
+
+#rename columns
+names(spatial.data)[1] <- "Haglof_Plot_ID"
+names(spatial.data)[2] <- "Plot_Radius"
+names(spatial.data)[3] <- "Haglof_ID"
+names(spatial.data)[4] <- "Tree_Dia"
+names(spatial.data)[5] <- "Tree_PosTex1"
+names(spatial.data)[6] <- "Tree_PosTex2"
+names(spatial.data)[7] <- "Tree_PosTex3"
+names(spatial.data)[8] <- "Tree_Local_x"
+names(spatial.data)[9] <- "Tree_Local_y"
+names(spatial.data)[10] <- "Tree_Local_Dist"
+names(spatial.data)[11] <- "Tree_Local_Angle"
+names(spatial.data)[12] <- "Tree_Angle_ToPlotCenter"
+names(spatial.data)[13] <- "Latitude"
+names(spatial.data)[14] <- "Longitude"
+names(spatial.data)[15] <- "Site"
+names(spatial.data)[16] <- "Tag"
+names(spatial.data)[17] <- "Species"
+names(spatial.data)[18] <- "Health_status"
+names(spatial.data)[19] <- "Date"
+names(spatial.data)[20] <- "PlotID"
+
+spatial.data %>%
+  dplyr::select("Haglof_Plot_ID", "Haglof_ID", "Tag", "Tree_Dia", "Latitude", "Longitude", "Species", "PlotID", "Health_status") %>%
+  mutate(dbh = Tree_Dia*0.1) -> jim
+
+# #merging
+# stem <-  merge(df, jim, all.x = TRUE)
+
+#
+stem <- subset(jim, Species != "SNAG")
+#
+#bring in conversion to leaf area
+allo.df <- read.csv("C:/github/forte_canopy_neighborhoods/data/dbh_to_leaf_area_conversions.csv")
+
+allo.df %>%
+  filter(component == "FL") -> allo.fl
+stem <- merge(stem, allo.fl)
+
+stem$leaf.mass <- stem$a * (stem$dbh^stem$b)
+
+stem <- droplevels(stem)
+
+
+attach(stem)
+stem$genus[stem$Species == "ACPE"] <- "Acer"
+stem$genus[stem$Species == "ACRU"] <- "Acer"
+stem$genus[stem$Species == "ACSA"] <- "Acer"
+stem$genus[stem$Species == "BEPA"] <- "Betula"
+stem$genus[stem$Species == "PIRE"] <- "Pinus"
+stem$genus[stem$Species == "PIST"] <- "Pinus"
+stem$genus[stem$Species == "QURU"] <- "Quercus"
+stem$genus[stem$Species == "AMEL"] <- "Other"
+stem$genus[stem$Species == "TSCA"] <- "Tsuga"
+stem$genus[stem$Species == "FAGR"] <- "Fagus"
+stem$genus[stem$Species == "POGR"] <- "Populus"
+stem$genus[stem$Species == "POTR"] <- "Populus"
+stem$genus[stem$Species == "unknown"] <- "Other"
+
+stem$genus <- as.factor(stem$genus)
+
+attach(stem)
+stem$sla[stem$genus == "Acer"] <- 19
+stem$sla[stem$genus == "Betula"] <- 20.82
+stem$sla[stem$Species == "PIRE"] <- 5.39 #penner and deblonde ref.
+stem$sla[stem$Species == "PIST"] <- 12.5 #abrams & kubiske, 1990
+stem$sla[stem$genus == "Quercus"] <- 14.2
+stem$sla[stem$genus == "Other"] <- 19
+stem$sla[stem$genus == "Tsuga"] <- 5.84
+stem$sla[stem$genus == "Fagus"] <- 35
+stem$sla[stem$genus == "Populus"] <- 15.89
+
+stem$lai <- stem$leaf.mass * stem$sla
+
+## add a column to denote focal vs nonfocal tree
+stem$focal <- 
+  ifelse(grepl(".W..", stem$Tag),
+         "Y",
+         ifelse(grepl(".E..", stem$Tag),
+                "Y", "N"
+                       ))
+
+stem %>%
+  filter(dbh >= 8 | focal == "Y") -> stem
+
+## map the focal trees
+message("FOCAL TREES ONLY")  
+  stem %>%
+  filter(focal == "Y") -> df
+  
+nrow(df)
+print(sort(df$Tag))
+
+focal <- ggplot(data = df, aes(x = Longitude, y = Latitude, color = genus, shape = PlotID)) +
+  geom_point(alpha = 1)+
+  scale_colour_manual(values=cbbPalette, limits = levels(stem$genus))+
+  # geom_text(aes(label=Nr),hjust=0, vjust=0)+
+  # guides(fill=FALSE, alpha=FALSE, size=FALSE)+
+  ggtitle("Focal Trees")+
+  theme_classic()
+
+focal
+```
+
+```{r echo=FALSE, message=FALSE}
+## Maps for D01
+
+####################################
+###
+# Assigned Disturbance Level Per Plot - Group D
+#  group plot disturbance
+#      D    1           0
+#      D    2          85
+#      D    3          45
+#      D    4          65
+#
+###
+# ALL of the treatments for canopy tree neighborhoods are "top-down"
+##################
+message("D01, CONTROL")  
+  stem %>%
+  filter(PlotID == "D01") %>%
+  arrange(lai) -> df
+
+# plot lai
+sum.lai <- sum(df$lai)
+
+# they all live
+df$fate <- "live"
+
+#look at output
+table(df$fate)
+
+ggplot(data = df, aes(x = Longitude, y = Latitude, size = (dbh), color = genus, shape = fate)) +
+  geom_point(alpha = 1)+
+  scale_colour_manual(values=cbbPalette, limits = levels(stem$genus))+
+  # scale_shape_manual(values=c(19))+
+  # geom_text(aes(label=Nr),hjust=0, vjust=0)+
+  # guides(fill=FALSE, alpha=FALSE, size=FALSE)+
+  ggtitle("D01 - Control")+
+  theme_classic()
+
+D01 <- df
+
+```
+
+```{r, echo=FALSE, message=FALSE}
+
+## Maps for D02
+
+#####################################
+message("D02, 85%")
+
+stem$Haglof_ID <- as.numeric(stem$Haglof_ID)
+  stem %>%
+  filter(PlotID == "D02" & Health_status != "D" & Tag > 3000) %>%
+  arrange(-dbh) -> df
+
+sum.lai <- sum(df$lai)
+
+# message("Plot LAI")
+# plot.lai <- sum.lai/1000
+# print(plot.lai)
+
+#modified lai
+target.lai <- 0.85 * sum.lai
+
+df %>% 
+  filter(Health_status == "G") %>%
+  summarise(sum(lai)) -> girdled.lai
+
+df %>% 
+  filter(Health_status == "L") %>%
+  summarise(sum(lai)) -> live.lai
+
+adj.target.lai <- target.lai - girdled.lai
+
+# subsetting
+df %>% 
+  filter(Health_status == "L") %>%
+  arrange(-dbh) -> live.df
+
+x <- 0  
+for (i in 1:nrow(live.df)) {
+  x <- x + live.df$lai[i]
+  
+  if(x < (adj.target.lai)){
+    live.df$fate[i] <- "kill"}
+  else {
+    live.df$fate[i] <- "live"
+  }
+  
+}
+
+
+df %>% 
+  filter(Health_status == "G") -> gird.df
+
+gird.df$fate <- "kill"
+
+combo.df <- rbind(live.df, gird.df)
+
+#look at output
+table(combo.df$fate)
+
+
+x11()
+ggplot(data = combo.df, aes(x = Longitude, y = Latitude, size = (dbh), color = genus, shape = fate)) +
+  geom_point(alpha = 1)+
+  scale_colour_manual(values=cbbPalette, limits = levels(stem$genus))+
+  scale_shape_manual(values=c(1, 19))+
+  # geom_text(aes(label=Nr),hjust=0, vjust=0)+
+  # guides(fill=FALSE, alpha=FALSE, size=FALSE)+
+  ggtitle("D02 - 85%")+
+  theme_classic()
+
+
+##################
+# compare
+combo.df %>%
+  filter(fate == "kill") %>%
+  select(lai) %>%
+  sum() -> D02.dead.lai
+message("LAI of all trees to Kill")
+print(D02.dead.lai)
+
+# Compare
+message("Ratio of Kill to Live LAI - Targeting 85% Disturbance threshold")
+D02.ratio.lai <- D02.dead.lai/sum.lai
+print(D02.ratio.lai)
+
+#####################################
+
+D02 <- combo.df
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+## Maps for D03
+
+#####################################
+message("D03, 45%")
+stem$Haglof_ID <- as.numeric(stem$Haglof_ID)
+  stem %>%
+  filter(PlotID == "D03" & Health_status != "D" & Tag > 3000) %>%
+  arrange(-dbh) -> df
+
+sum.lai <- sum(df$lai)
+
+# message("Plot LAI")
+# plot.lai <- sum.lai/1000
+# print(plot.lai)
+
+#modified lai
+target.lai <- 0.45 * sum.lai
+
+df %>% 
+  filter(Health_status == "G") %>%
+  summarise(sum(lai)) -> girdled.lai
+
+df %>% 
+  filter(Health_status == "L") %>%
+  summarise(sum(lai)) -> live.lai
+
+adj.target.lai <- target.lai - girdled.lai
+
+# subsetting
+df %>% 
+  filter(Health_status == "L") %>%
+  arrange(-dbh) -> live.df
+
+x <- 0  
+for (i in 1:nrow(live.df)) {
+  x <- x + live.df$lai[i]
+  
+  if(x < (adj.target.lai)){
+    live.df$fate[i] <- "kill"}
+  else {
+    live.df$fate[i] <- "live"
+  }
+  
+}
+
+# df %>% 
+#   filter(Health_status == "G") -> gird.df
+# 
+# gird.df$fate <- "kill"
+
+# combo.df <- rbind(live.df, gird.df)
+
+#look at output
+table(live.df$fate)
+
+
+x11()
+ggplot(data = live.df, aes(x = Longitude, y = Latitude, size = (dbh), color = genus, shape = fate)) +
+  geom_point(alpha = 1)+
+  scale_colour_manual(values=cbbPalette, limits = levels(stem$genus))+
+  scale_shape_manual(values=c(1, 19))+
+  # geom_text(aes(label=Nr),hjust=0, vjust=0)+
+  # guides(fill=FALSE, alpha=FALSE, size=FALSE)+
+  ggtitle("D03 - 45%")+
+  theme_classic()
+
+
+##################
+# compare
+live.df %>%
+  filter(fate == "kill") %>%
+  select(lai) %>%
+  sum() -> D03.dead.lai
+message("LAI of all trees to Kill")
+print(D03.dead.lai)
+
+# Compare
+message("Ratio of Kill to Live LAI - Targeting 45% Disturbance threshold")
+D03.ratio.lai <- D03.dead.lai/sum.lai
+print(D03.ratio.lai)
+
+#####################################
+
+D03 <- live.df  
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+## Maps for D04
+
+#####################################
+message("D04, 65%")
+  stem %>%
+  filter(PlotID == "D04" & Health_status != "D" & Tag > 3000) %>%
+  arrange(-dbh) -> df
+
+sum.lai <- sum(df$lai)
+
+# message("Plot LAI")
+# plot.lai <- sum.lai/1000
+# print(plot.lai)
+
+#modified lai
+target.lai <- 0.65 * sum.lai
+
+df %>% 
+  filter(Health_status == "G") %>%
+  summarise(sum(lai)) -> girdled.lai
+
+df %>% 
+  filter(Health_status == "L") %>%
+  summarise(sum(lai)) -> live.lai
+
+adj.target.lai <- target.lai - girdled.lai
+
+# subsetting
+df %>% 
+  filter(Health_status == "L") %>%
+  arrange(-dbh) -> live.df
+
+x <- 0  
+for (i in 1:nrow(live.df)) {
+  x <- x + live.df$lai[i]
+  
+  if(x < (adj.target.lai)){
+    live.df$fate[i] <- "kill"}
+  else {
+    live.df$fate[i] <- "live"
+  }
+  
+}
+
+df %>% 
+  filter(Health_status == "G") -> gird.df
+
+gird.df$fate <- "kill"
+
+combo.df <- rbind(live.df, gird.df)
+
+#look at output
+table(combo.df$fate)
+
+
+x11()
+ggplot(data = combo.df, aes(x = Longitude, y = Latitude, size = (dbh), color = genus, shape = fate)) +
+  geom_point(alpha = 1)+
+  scale_colour_manual(values=cbbPalette, limits = levels(stem$genus))+
+  scale_shape_manual(values=c(1, 19))+
+  # geom_text(aes(label=Nr),hjust=0, vjust=0)+
+  # guides(fill=FALSE, alpha=FALSE, size=FALSE)+
+  ggtitle("D04 - 65%")+
+  theme_classic()
+
+
+##################
+# compare
+combo.df %>%
+  filter(fate == "kill") %>%
+  select(lai) %>%
+  sum() -> D04.dead.lai
+message("LAI of all trees to Kill")
+print(D04.dead.lai)
+
+# Compare
+message("Ratio of Kill to Live LAI - Targeting 65% Disturbance threshold")
+D04.ratio.lai <- D04.dead.lai/sum.lai
+print(D04.ratio.lai)
+
+#####################################
+
+D04 <- combo.df
+
+```
+
+```{r, echo=FALSE, warning = FALSE}
+big.boi <- rbind(D01, D02, D03, D04)
+
+library(ggplot2)
+library(ggmap)
+require(plyr)
+require(dplyr)
+require(tidyverse)
+require(ggforce)
+require(splitstackshape)
+require(data.table)
+library(forcats)
+require(ggridges)
+
+big.boi %>%
+  mutate(YearFct = fct_rev(as.factor(PlotID))) %>%
+  ggplot(aes(y = YearFct))+
+  geom_density_ridges(
+    aes(x = lai, fill = fate),
+    alpha = .85, color = "white", from = 0, to = 30
+  )+
+  labs(
+    x = "Leaf area (Kg)",
+    y = "Plot ID",
+    title = "",
+    subtitle = "Disturbance"
+    #caption = "Marc Belzunces (@marcbeldata) | Source: Idescat"
+  ) +
+  scale_y_discrete(expand = c(0.01, 0)) +
+  scale_x_continuous(expand = c(0.01, 0)) +
+  scale_fill_cyclical(
+    # breaks = c("A01E live", "kill"),
+    # labels = c(`A01E live` = "Live", `A01E kill` = "Kill"),
+    values = c("#E57200", "#232D4B", "#E57200", "#232D4B"),
+    name = "Fate", guide = "legend"
+  ) +
+  theme_ridges(grid = FALSE)
+
+
+### Write this to file
+# write.csv(big.boi, "Canopy_Tree_Neighborhoods_Disturbance_Output.csv")
+
+message("Total mortality count")
+table(big.boi$fate)
+death <- length(which(big.boi == "kill"))
+
+# get percentage lai
+big.boi %>%
+  group_by(PlotID) %>%
+  filter(fate == "live") %>%
+  summarise(live.leaf.area = sum(lai)) -> life.table
+
+big.boi %>%
+  group_by(PlotID) %>%
+  filter(fate == "kill") %>%
+  summarise(kill.leaf.area = sum(lai)) -> kill.table
+
+#merge
+death.table <- merge(life.table, kill.table, all.x = TRUE)
+death.table <- data.frame(death.table)
+death.table[is.na(death.table)] <- 0
+
+
+death.table$live.prop <- death.table$live.leaf.area / (death.table$live.leaf.area + death.table$kill.leaf.area)
+death.table$kill.prop <- death.table$kill.leaf.area / (death.table$live.leaf.area + death.table$kill.leaf.area)
+
+
+# make tidy
+death.table %>% gather(fate, prop, live.prop:kill.prop) -> tidy.death
+
+tidy.death$prop <- round(tidy.death$prop, 2)
+  
+#####
+# ggplot(data = tidy.death, aes(x = PlotID, y = prop, fill = fate, label = prop)) +
+#     geom_bar(stat="identity", alpha = 0.7)+
+#     geom_text(size = 3, position = position_stack(vjust = 0.5))+
+#   theme_classic()+
+#   scale_fill_manual(values=c("#E57200", "#232D4B"))+
+#   xlab("")+
+#   ylab("Proportion")
+
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+## add "fate" to data set so we can see which stems were killed and which were not in girdling in 2019.
+
+## bring in original death list output from Jeff Atkins. (indentical list could be generated from code above but a few segments were tweaked here, so just using original to avoid any issues)
+
+kill_list <- read.csv("C:/github/forte_canopy_neighborhoods/data/Canopy_Tree_Neighborhoods_Disturbance_Output.csv")
+kill_list <- as.data.frame(kill_list)
+
+kill_list <- kill_list %>%
+  dplyr::select(Tag, fate)
+
+all_stems <- left_join(stem, kill_list, by = "Tag")
+# tibble::view(all_stems)
+
+## replace values for "fate" vector for the girdled focal trees, 
+which(all_stems$Health_status == "G" & all_stems$focal == "Y")
+all_stems[600,22] = "kill" ## 4EQ3
+all_stems[362,22] = "kill" ## 2WP3
+
+all_stems$fate <- replace_na(all_stems$fate, "live")
+
+# write.csv(all_stems, "C:/github/forte_canopy_neighborhoods/data/cleaned_data_for_analyses/trees_spatial.csv", row.names = FALSE)
+
+## make new data frame just for ungirdled (i.e. live) focal trees
+focal_trees <- all_stems %>%
+  filter(focal == "Y" & fate == "live")
+
+## graph all
+all_map <- ggplot(data = all_stems, aes(x = Longitude, y = Latitude, size = (dbh), color = genus, shape = fate)) +
+  geom_point(alpha = 1) +
+  scale_colour_manual(values=cbbPalette, limits = levels(stem$genus))+
+  scale_shape_manual(values=c(1, 19))+
+  # geom_text(aes(label=Nr),hjust=0, vjust=0)+
+  # guides(fill=FALSE, alpha=FALSE, size=FALSE)+
+  ggtitle("All stems")+
+  facet_wrap(~PlotID) +
+  theme_classic() +
+  geom_point(data = focal_trees, size=1, color = "black") 
+all_map
+
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+## try to turn spatial data (simple coordinates, with no CRS) into a spatial points file in package sf that we can then apply buffers to
+
+
+## try to make the spatial points file using all coordinate data from the "all_stems" data set
+crs <- CRS("+init=epsg:32616") ## UTM Zone 16N WGS84
+
+tree_points <- st_as_sf(all_stems,
+                        coords = c("Longitude", "Latitude"),
+                        crs = crs) 
+
+tree_points_32616 <- tree_points %>%
+  st_set_crs(4326) %>%
+  st_transform(32616)
+
+mapview(tree_points_32616)
+
+###FIXED BY JT!~!!!!!!
+#### Buffering Attempt 1: use sf::st_buffer
+# first, create a layer that just contains focal trees
+focal_tree_points <- focal_trees %>%
+  select(Tag, Latitude, Longitude)
+
+focal_tree_points <- st_as_sf(focal_tree_points,
+                              coords = c("Longitude", "Latitude"),
+                              crs = crs)
+
+focal_tree_points_32616 <- focal_tree_points %>%
+  st_set_crs(4326) %>%
+  st_transform(32616)
+
+plot(focal_tree_points_32616)
+mapview(focal_tree_points_32616)
+
+
+focal_buff <- st_buffer(focal_tree_points_32616, 8, byid = TRUE)
+
+plot(focal_buff)
+
+
+
+ggplot() + geom_sf(data = focal_buff)
+
+mapview(focal_buff)
+
+## try with 10m buffer, just to check
+
+focal_buff_10m <- st_buffer(focal_tree_points_32616, 10, byid = TRUE)
+
+mapview(focal_buff_10m)
+
+
+## 7.5m, a value
+## informed by other studies (Canham et al., 2004; Canham et al., 2006;
+## Uriarte et al., 2004; Kim et al. 2021)
+
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+## now that buffers are drawn, let's run a spatial intersection to subset the trees in each canopy tree's neighborhood!
+head(focal_buff)
+
+## st_intersect will compute intersection of polygon geometries from focal_buff with stem map data from tree_points_32616
+neighborhood_trees <- sf::st_intersection(tree_points_32616, focal_buff)
+mapview(focal_buff, legend=FALSE) + mapview(neighborhood_trees, cex = "dbh")
+
+## now with 10m buffer for comparison
+neighborhoods_10m <- sf::st_intersection(tree_points_32616, focal_buff_10m)
+mapview(focal_buff_10m, legend=FALSE) + mapview(neighborhoods_10m, cex = "dbh", zcol = "Species")
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+## now, to try some modeling with the tree neighborhood data
+## count unique tag IDs in "Tag.1" column of neighborhood_trees; these are equivalent to neighborhood IDs, I think
+print(unique(neighborhood_trees$Tag.1)) ## yep
+
+## now each neighborhood has a unique identifier
+## compute neighborhood parameters of interest: Di, Hi
+## first need to convert neighborhood trees' DBH values to basal area
+
+## clean up df first
+neighborhoods_10m <- neighborhoods_10m %>%
+  select(-Haglof_ID, -Haglof_Plot_ID, -Tree_Dia, -component, -a, -b, -se, -source, -ref, -leaf.mass, -sla) %>%
+  dplyr::rename(Neighborhood_ID = Tag.1)
+
+## convert dbh to basal area (only have the 2018 values)
+neighborhoods_10m <- neighborhoods_10m %>%
+  mutate(BA_2018 = 3.141593*((dbh/2)^2))
+
+## check: create new neighborhoods data frame with the focal tree for each neighborhood flagged
+neighborhoods_10m_focals <- neighborhoods_10m %>%
+  group_by(Neighborhood_ID) %>%
+  filter(Tag == Neighborhood_ID)
+
+## now compute neighborhood fraction disturbed per neighborhood
+neighborhoods_10m_metrics <- neighborhoods_10m %>%
+  select(-geometry) %>%
+  filter(Tag != Neighborhood_ID) %>%
+  group_by(Neighborhood_ID, fate, Species) %>%
+  dplyr::summarise(BA_Species = sum(BA_2018),
+                   n = n())
+
+# write.csv(frac_dead, "C:/github/forte_canopy_neighborhoods/data/cleaned_data_for_analyses/BA_frac_dead_live.csv", row.names = FALSE)
+
+## calculate BA-weighted Shannons
+neighbors_BA <- read.csv("C:/github/forte_canopy_neighborhoods/data/cleaned_data_for_analyses/BA_by_species_by_fate.csv")
+neighbors_BA <- as_tibble(neighbors_BA)
+
+## just do calculation manually; use basal area by species rather than species counts
+neighbors_shannons <- neighbors_BA %>%
+  group_by(Neighborhood_ID, Species) %>%
+  dplyr::summarise(BA_total = sum(BA_Species)) 
+
+ba_all <- neighbors_shannons %>%
+  group_by(Neighborhood_ID) %>%
+  dplyr::summarise(BA_nb = sum(BA_total))
+
+## join total BA and Species-level BA
+BA <- left_join(neighbors_shannons, ba_all, by = "Neighborhood_ID")
+BA <- BA %>%
+  mutate(P_i = BA_total / BA_nb) %>%
+  mutate(lnP_i = log(P_i)) %>%
+  mutate(P_ilnP_I  = (P_i)*(lnP_i))
+
+H_weighted <- BA %>%
+  group_by(Neighborhood_ID) %>%
+  dplyr::summarise(-sum(P_ilnP_I)) ## basal-area weighted Shannons! Woohoo!
+
+## now compute fraction BA senesced in each neighborhood
+frac_dead <- neighbors_BA %>%
+  group_by(Neighborhood_ID, fate) %>%
+  dplyr::summarise(BA_tot = sum(BA_Species))
+
+BA_frac <- left_join(frac_dead, ba_all, by = "Neighborhood_ID")
+
+frac_dead <- BA_frac %>%
+  mutate(BA_frac = BA_tot / BA_nb)
+
+nb_frac <- read.csv("C:/github/forte_canopy_neighborhoods/data/cleaned_data_for_analyses/BA_frac_dead_live.csv")
+
+nb_frac <- nb_frac %>%
+  filter(fate== "kill")
+
+## combine fraction killed with basal Shannons and tree neighborhoods into one df
+nb_metrics <- left_join(nb_frac, H_weighted, by = "Neighborhood_ID")
+
+nb_metrics_points <- focal_tree_points_32616 %>%
+  dplyr::rename("Neighborhood_ID" = "Tag")
+
+nb_metrics_points <- left_join(nb_metrics_points, nb_metrics, by = "Neighborhood_ID")
+nb_metrics_points <- nb_metrics_points %>%
+  select(-fate, -BA_tot)
+
+nb_metrics_points <- nb_metrics_points %>%
+  dplyr::rename("BA_frac_killed" = "BA_frac",
+         "H_BA_weighted" = "-sum(P_ilnP_I)")
+
+mapview(nb_metrics_points, cex = "BA_frac_killed", legend=FALSE) 
+# write.csv(nb_metrics_points, "C:/github/forte_canopy_neighborhoods/data/cleaned_data_for_analyses/nb_metrics_points.csv", row.names = FALSE)
+
+
+```
